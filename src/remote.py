@@ -96,58 +96,9 @@ def start_listening(server_socket, model):
     while alive:
         alive = handle_request(connected_socket, model)
 
-
 def run(port, model):
     """Main function"""
     server_socket = create_server_socket(port)
     start_listening(server_socket, model)
     server_socket.close()
     print "Connection closed"
-
-
-######################
-## Model to execute ##
-######################
-
-def decode_configuration(raw):
-    value = struct.unpack("b", raw)
-    return value[0]
-
-def encode_configuration(value):
-    raw = struct.pack("b", value)
-    return raw
-
-def initial_configurations():
-    print "[Initial Configurations]"
-    return [encode_configuration(0)]
-
-def fireable_transitions_from(configuration):
-    value = decode_configuration(configuration)
-    print "[Fireable Transitions From '" + str(value) + "']"
-    if value > 10:
-        return [b'\x02']
-    else:
-        return [b'\x01']
-
-def fire_transition(configuration, transition):
-    value = decode_configuration(configuration)
-    print "[Fire transition from '" + str(value) + "']"
-    if transition == b'\x01':
-        return [encode_configuration(value+1)]
-    elif transition == b'\x02':
-        return [encode_configuration(0)]
-    else:
-        return [configuration]
-
-MODEL = {
-    CONF_SIZE: 1,
-    TRANSITION_SIZE: 1,
-    INITIAL_CONFIGURATIONS: initial_configurations,
-    FIREABLE_TRANSITIONS_FROM: fireable_transitions_from,
-    FIRE_TRANSITION: fire_transition
-}
-
-#################
-## Start model ##
-#################
-run(1234, MODEL)
