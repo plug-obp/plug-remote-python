@@ -20,7 +20,7 @@ def initial_configurations():
 def fireable_transitions_from(configuration):
     value = decode_configuration(configuration)
     print "[Fireable Transitions From '" + str(value) + "']"
-    if value > 10:
+    if value > 100:
         return [b'\x02']
     else:
         return [b'\x01']
