@@ -8,7 +8,7 @@ def main(argv):
     "Main function for remote"
 
     ## Read arguments
-    port = "1234"
+    port = "1238"
 
     try:
         opts, _ = getopt.getopt(argv, "hp:", ["port="])
@@ -31,4 +31,4 @@ def main(argv):
     remote.run(int(port), model.MODEL)
 
 if __name__ == "__main__":
-   main(sys.argv[1:])
+    main(sys.argv[1:])
