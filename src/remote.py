@@ -113,13 +113,6 @@ def handle_request(connected_socket, model):
             model[REGISTER_ATOMIC_PROPOSITIONS](propositions, model)
 
         elif unpacked[1] == b'\x05':
-            source = receive_configuration(connected_socket, model)
-            target = receive_configuration(connected_socket, model)
-            transition = receive_transition(connected_socket, model)
-            result = model[ATOMIC_PROPOSITION_VALUATIONS](source, target, transition, model)
-            send_valuations(connected_socket, result)
-
-        elif unpacked[1] == b'\x06':
             target = receive_configuration(connected_socket, model)
             result = model[ATOMIC_PROPOSITION_VALUATIONS](None, target, None, model)
             send_valuations(connected_socket, result)
