@@ -22,7 +22,7 @@ def initial_configurations(model):
 def fireable_transitions_from(configuration, model):
     value = decode_configuration(configuration)
     print "[Fireable Transitions From '" + str(value) + "']"
-    if value > 100:
+    if value > 5:
         return [b'\x02']
     else:
         return [b'\x01']
@@ -41,11 +41,10 @@ def register_atomic_proposition(propositions, model):
     print "Register"
     model[ATOMS] = propositions
 
-def atomic_proposition_valuations(source, target, transition, model):
-    print "Proposition valuation"
+def atomic_proposition_valuations(configuration, model):
     result = []
     for atom in model[ATOMS]:
-        result.append(len(atom) > 0)
+        result.append(eval(atom, None, {"c": configuration}))
     return result
 
 MODEL = {
