@@ -19,12 +19,10 @@ def encode_configuration(value):
     return raw
 
 def initial_configurations(model):
-    print "[Initial Configurations]"
     return [encode_configuration(0)]
 
 def fireable_transitions_from(configuration, model):
     value = decode_configuration(configuration)
-    print "[Fireable Transitions From '" + str(value) + "']"
     if value > 5:
         return [b'\x02']
     else:
@@ -32,7 +30,6 @@ def fireable_transitions_from(configuration, model):
 
 def fire_transition(configuration, transition, model):
     value = decode_configuration(configuration)
-    print "[Fire transition from '" + str(value) + "']"
     if transition == b'\x01':
         return [encode_configuration(value+1)]
     elif transition == b'\x02':
@@ -41,7 +38,6 @@ def fire_transition(configuration, transition, model):
         return [configuration]
 
 def register_atomic_proposition(propositions, model):
-    print "Register"
     model[ATOMS] = propositions
 
 def atomic_proposition_valuations(configuration, model):

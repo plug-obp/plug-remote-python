@@ -90,7 +90,7 @@ def handle_request(connected_socket, model):
     header = bytearray(2)
     connected_socket.recv_into(header)
     unpacked = struct.unpack("<cc", header)
-    print "Received " + str(unpacked)
+    #print "Received " + str(unpacked)
     if unpacked[0] == b'\x01':
         if unpacked[1] == b'\x01':
             send_configurations(connected_socket, model, model[INITIAL_CONFIGURATIONS](model))
@@ -104,7 +104,6 @@ def handle_request(connected_socket, model):
             configuration = receive_configuration(connected_socket, model)
             transition = receive_transition(connected_socket, model)
             result = model[FIRE_TRANSITION](configuration, transition, model)
-            print "Next configurations are " + str(result)
             send_configurations(connected_socket, model, result)
 
         elif unpacked[1] == b'\x04':
