@@ -9,6 +9,8 @@ GUARD = "guard"
 ACTION = "action"
 ORIGINAL = "original"
 
+ATOMS = "atoms"
+
 def decode_configuration(original, raw):
     """Decode raw configuration to variables"""
     result = {}
@@ -47,6 +49,16 @@ def fire_transition(configuration, transition, model):
     behaviours[index][ACTION](variables)
     return [encode_configuration(variables)]
 
+def register_atomic_proposition(propositions, model):
+    model[ATOMS] = propositions
+
+def atomic_proposition_valuations(configuration, model):
+    variables = decode_configuration(model[ORIGINAL], configuration)
+    result = []
+    for atom in model[ATOMS]:
+        result.append(eval(atom, None, {"c": variables}))
+    return result
+
 def init_model(variables = {}, behaviours = {}):
     return {
         VARIABLES: variables,
@@ -63,9 +75,10 @@ def to_plug(model):
         ORIGINAL: model,
         remote.CONF_SIZE: len(model[VARIABLES]) * 4,
         remote.TRANSITION_SIZE: transition_size,
-        remote.INITIAL_CONFIGURATIONS: lambda (model): [encode_configuration(model[ORIGINAL][VARIABLES])],
+        remote.INITIAL_CONFIGURATIONS:
+            lambda (model): [encode_configuration(model[ORIGINAL][VARIABLES])],
         remote.FIREABLE_TRANSITIONS_FROM: fireable_transitions_from,
         remote.FIRE_TRANSITION: fire_transition,
-        remote.REGISTER_ATOMIC_PROPOSITIONS: None,
-        remote.ATOMIC_PROPOSITION_VALUATIONS: None
+        remote.REGISTER_ATOMIC_PROPOSITIONS: register_atomic_proposition,
+        remote.ATOMIC_PROPOSITION_VALUATIONS: atomic_proposition_valuations
     }
