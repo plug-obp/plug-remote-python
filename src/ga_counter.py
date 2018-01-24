@@ -1,28 +1,30 @@
-from ga import VARIABLES, BEHAVIOURS, GUARD, ACTION, to_plug
+from ga import VARIABLES, BEHAVIOURS, GUARD, ACTION, init_model, to_plug
 import sys
-from main import main
+import main
+import functools
 
-MAX = 1024
 
-def inc_action(c):
-    c["c"] = c["c"] + 1
+def inc_action(var,c):
+    c[var] = c[var] + 1
 
-def reset_action(c):
-    c["c"] = 0
+def reset_action(var,c):
+    c[var] = 0
 
-COUNTER_MODEL = {
-    VARIABLES: {"c": 0},
-    BEHAVIOURS: {
-        "inc": {
-            GUARD: lambda c: c["c"] < MAX,
-            ACTION: inc_action
-        },
-        "reset": {
-            GUARD: lambda c: c["c"] >= MAX,
-            ACTION: reset_action
-        }
+def add_counter(var, maximum, ga):
+    ga[VARIABLES][var] = 0
+    ga[BEHAVIOURS]["inc_" + var] = {
+        GUARD: lambda c: c[var] < maximum,
+        ACTION: functools.partial(inc_action, var)
     }
-}
+    ga[BEHAVIOURS]["reset_" + var] = {
+        GUARD: lambda c: c[var] >= maximum,
+        ACTION: functools.partial(reset_action, var)
+    }
 
 if __name__ == "__main__":
-    main(sys.argv[1:], to_plug(COUNTER_MODEL))
+    ga = init_model()
+    add_counter("a", 5, ga)
+    add_counter("b", 10, ga)
+    add_counter("c", 3, ga)
+    add_counter("d", 15, ga)
+    main.main(sys.argv[1:], to_plug(ga))

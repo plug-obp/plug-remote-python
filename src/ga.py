@@ -47,6 +47,12 @@ def fire_transition(configuration, transition, model):
     behaviours[index][ACTION](variables)
     return [encode_configuration(variables)]
 
+def init_model(variables = {}, behaviours = {}):
+    return {
+        VARIABLES: variables,
+        BEHAVIOURS: behaviours
+    }
+
 def to_plug(model):
     """Transforms guard_action model to plug model"""
     transition_size = 0
