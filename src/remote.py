@@ -7,7 +7,6 @@ TRANSITION_SIZE = "transition_size"
 INITIAL_CONFIGURATIONS = "initial_configurations"
 FIREABLE_TRANSITIONS_FROM = "fireable_transitions_from"
 FIRE_TRANSITION = "fire_transition"
-FIRE_TRANSITION = "fire_transition"
 REGISTER_ATOMIC_PROPOSITIONS = "register_atomic_propositions"
 ATOMIC_PROPOSITION_VALUATIONS = "atomic_proposition_valuations"
 

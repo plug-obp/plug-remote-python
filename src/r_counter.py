@@ -1,5 +1,8 @@
 import struct
 import remote  
+import sys
+from main import main
+
 
 ######################
 ## Model to execute ##
@@ -56,3 +59,6 @@ MODEL = {
     remote.REGISTER_ATOMIC_PROPOSITIONS: register_atomic_proposition,
     remote.ATOMIC_PROPOSITION_VALUATIONS: atomic_proposition_valuations
 }
+
+if __name__ == "__main__":
+    main(sys.argv[1:], MODEL)

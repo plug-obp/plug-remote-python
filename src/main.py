@@ -2,9 +2,8 @@
 import sys
 import getopt
 import remote
-import model
 
-def main(argv):
+def main(argv, model):
     "Main function for remote"
 
     ## Read arguments
@@ -28,7 +27,4 @@ def main(argv):
     #################
     ## Start model ##
     #################
-    remote.run(int(port), model.MODEL)
-
-if __name__ == "__main__":
-    main(sys.argv[1:])
+    remote.run(int(port), model)
