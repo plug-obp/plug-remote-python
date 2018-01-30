@@ -1,0 +1,3 @@
+{
+    "command": ["python", "./src/alicebob.py", "--port=$PLUG_PORT"]
+}

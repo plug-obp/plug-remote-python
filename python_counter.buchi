@@ -1,0 +1,6 @@
+{
+    "model": "python_counter.remote",
+    "properties": {
+        "exclusion": "![]!(|decode_configuration(c) > 2| && |decode_configuration(c) > 10|)"
+    }
+}
