@@ -8,6 +8,7 @@ BEHAVIOURS = "behaviours"
 GUARD = "guard"
 ACTION = "action"
 ORIGINAL = "original"
+GLOBALS = "globals"
 
 ATOMS = "atoms"
 
@@ -36,7 +37,7 @@ def fireable_transitions_from(configuration, model):
     behaviours = original[BEHAVIOURS]
     variables = decode_configuration(original, configuration)
     for name, behaviour in behaviours.iteritems():
-        if behaviour[GUARD](variables):
+        if not (GUARD in behaviour) or behaviour[GUARD](variables):
             result.append(name)
     return result
 
@@ -56,11 +57,13 @@ def atomic_proposition_valuations(configuration, model):
     variables = decode_configuration(model[ORIGINAL], configuration)
     result = []
     for atom in model[ATOMS]:
-        result.append(eval(atom, None, {"c": variables}))
+        result.append(eval(atom, model[GLOBALS], {"c": variables}))
     return result
 
-def init_model(variables = {}, behaviours = {}):
+def init_model(g = {}, variables = {}, behaviours = {}):
+    """Creates a empty guard action model"""
     return {
+        GLOBALS: g,
         VARIABLES: variables,
         BEHAVIOURS: behaviours
     }
@@ -72,6 +75,7 @@ def to_plug(model):
         transition_size = max(transition_size, len(name))
 
     return {
+        GLOBALS: model[GLOBALS],
         ORIGINAL: model,
         remote.CONF_SIZE: len(model[VARIABLES]) * 4,
         remote.TRANSITION_SIZE: transition_size,

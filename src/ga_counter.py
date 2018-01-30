@@ -22,7 +22,7 @@ def add_counter(var, maximum, ga_model):
     }
 
 if __name__ == "__main__":
-    ga_model = init_model()
+    ga_model = init_model(globals())
     add_counter("a", 5, ga_model)
     add_counter("b", 10, ga_model)
 #    add_counter("c", 3, ga_model)
