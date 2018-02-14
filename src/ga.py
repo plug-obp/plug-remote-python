@@ -67,6 +67,9 @@ def configuration_items(configuration, model):
         items.append(remote.create_configuration_item("variable", name + " = " + str(value)))
     return items
 
+def fireable_transition_description(transition, model):
+    return str(transition)
+
 def init_model(g = {}, variables = {}, behaviours = {}):
     """Creates a empty guard action model"""
     return {
@@ -92,5 +95,6 @@ def to_plug(model):
         remote.FIRE_TRANSITION: fire_transition,
         remote.REGISTER_ATOMIC_PROPOSITIONS: register_atomic_proposition,
         remote.ATOMIC_PROPOSITION_VALUATIONS: atomic_proposition_valuations,
-        remote.CONFIGURATION_ITEMS: configuration_items
+        remote.CONFIGURATION_ITEMS: configuration_items,
+        remote.FIREABLE_TRANSITION_DESCRIPTION: fireable_transition_description
     }

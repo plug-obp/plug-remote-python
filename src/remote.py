@@ -159,8 +159,8 @@ def handle_request(connected_socket, model):
 
         elif unpacked[1] == 11:
             transition = receive_transition(connected_socket, model)
-            result = model[FIREABLE_TRANSITION_DESCRIPTION](transition, model)
-            #send_string(connected_socket, result)
+            result = model.get(FIREABLE_TRANSITION_DESCRIPTION, lambda t,m: str(t))(transition, model)
+            send_string(connected_socket, result)
 
         else:
             print 'Unknown request: ' + unpacked[1]
