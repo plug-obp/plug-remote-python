@@ -13,7 +13,7 @@ ATOMIC_PROPOSITION_VALUATIONS = "atomic_proposition_valuations"
 CONFIGURATION_ITEMS = "configuration_items"
 FIREABLE_TRANSITION_DESCRIPTION = "fireable_transition_description"
 
-def create_configuration_item(type_, name, icon = "", children = []):
+def create_configuration_item(type_, name, icon = None, children = []):
     result = {}
     result['type'] = type_
     result['name'] = name
@@ -98,12 +98,17 @@ def send_valuations(connected_socket, valuations):
 
 def send_string(connected_socket, string):
     """Sends a string in UTF-8"""
-    raw = string.encode("utf-8")
-    raw_count = len(raw)
-    data = bytearray(4)
-    struct.pack_into("<i", data, 0, raw_count)
-    connected_socket.send(data)
-    connected_socket.send(raw)
+    if (string == None):
+        data = bytearray(4)
+        struct.pack_into("<i", data, 0, -1)
+        connected_socket.send(data)
+    else:
+        raw = string.encode("utf-8")
+        raw_count = len(raw)
+        data = bytearray(4)
+        struct.pack_into("<i", data, 0, raw_count)
+        connected_socket.send(data)
+        connected_socket.send(raw)
 
 def send_configuration_item(connected_socket, item):
     """Sends one configuration item"""
