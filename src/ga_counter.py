@@ -23,8 +23,8 @@ def add_counter(var, maximum, ga_model):
 
 if __name__ == "__main__":
     ga_model = init_model(globals())
-    add_counter("a", 5, ga_model)
-    add_counter("b", 10, ga_model)
+    add_counter("a", 15, ga_model)
+    add_counter("b", 20, ga_model)
 #    add_counter("c", 3, ga_model)
 #    add_counter("d", 15, ga_model)
     main.main(sys.argv[1:], to_plug(ga_model))

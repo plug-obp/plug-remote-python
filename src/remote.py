@@ -85,6 +85,17 @@ def send_transitions(connected_socket, model, transitions):
         current += size
     connected_socket.send(message)
 
+def send_ints(connected_socket, ints):
+    """Sends an array of integers"""
+    count = len(ints)
+    message = bytearray(4+count*4)
+    struct.pack_into("<i", message, 0, count)
+    current = 4
+    for value in ints:
+        struct.pack_into("<i", message, current, value)
+        current += 4
+    connected_socket.send(message)
+
 def send_valuations(connected_socket, valuations):
     """Sends valuations for atomic propositions"""
     count = len(valuations)
@@ -150,11 +161,12 @@ def handle_request(connected_socket, model):
 
         elif unpacked[1] == 4:
             propositions = receive_atomic_propositions(connected_socket)
-            model[REGISTER_ATOMIC_PROPOSITIONS](propositions, model)
+            result = model.get(REGISTER_ATOMIC_PROPOSITIONS, lambda ps, m: [])(propositions, model)
+            send_ints(connected_socket, result)
 
         elif unpacked[1] == 5:
             configuration = receive_configuration(connected_socket, model)
-            result = model[ATOMIC_PROPOSITION_VALUATIONS](configuration, model)
+            result = model.get(ATOMIC_PROPOSITION_VALUATIONS, lambda c, m: [])(configuration, model)
             send_valuations(connected_socket, result)
 
         elif unpacked[1] == 10:

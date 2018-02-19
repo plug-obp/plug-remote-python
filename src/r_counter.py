@@ -38,7 +38,13 @@ def fire_transition(configuration, transition, model):
         return [configuration]
 
 def register_atomic_proposition(propositions, model):
-    model[ATOMS] = propositions
+    atoms = model[ATOMS]
+    result = []
+    for proposition in propositions:
+        result.append(len(atoms))
+        atoms.append(proposition)
+    return result
+
 
 def atomic_proposition_valuations(configuration, model):
     result = []
@@ -52,6 +58,7 @@ MODEL = {
     remote.INITIAL_CONFIGURATIONS: initial_configurations,
     remote.FIREABLE_TRANSITIONS_FROM: fireable_transitions_from,
     remote.FIRE_TRANSITION: fire_transition,
+    ATOMS: [],
     remote.REGISTER_ATOMIC_PROPOSITIONS: register_atomic_proposition,
     remote.ATOMIC_PROPOSITION_VALUATIONS: atomic_proposition_valuations
 }
