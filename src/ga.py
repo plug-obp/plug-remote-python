@@ -62,7 +62,10 @@ def atomic_proposition_valuations(configuration, model):
     variables = decode_configuration(model[ORIGINAL], configuration)
     result = []
     for atom in model[ATOMS]:
-        result.append(eval(atom, model[GLOBALS], {"c": variables}))
+        try: 
+            result.append(eval(atom, model[GLOBALS], {"c": variables}))
+        except:
+             result.append(False)
     return result
 
 def configuration_items(configuration, model):
