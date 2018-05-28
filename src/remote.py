@@ -103,7 +103,10 @@ def send_valuations(connected_socket, valuations):
     struct.pack_into("<i", message, 0, count)
     current = 4
     for value in valuations:
-        struct.pack_into("B", message, current, value)
+        try:
+            struct.pack_into("B", message, current, value)
+        except:
+            struct.pack_into("B", message, current, False)
         current += 1
     connected_socket.send(message)
 
