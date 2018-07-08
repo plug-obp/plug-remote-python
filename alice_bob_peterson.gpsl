@@ -1,0 +1,24 @@
+aliceCS			= |e.alice==2|
+bobCS			= |e.bob==2|
+exclusionI 		= []!(|e.alice==0| && |e.bob==0|)
+exclusion  		= []!(aliceCS && bobCS)
+eventuallyOneInCS 	= []<>(aliceCS || bobCS)
+
+stopInCS = [] !aliceCS
+
+fairness 		= 
+	let
+		aliceFlagUP=|e[flag_alice] = True|,
+		bobFlagUP=|e[flag_bob] = True|
+	in 
+		 ([]  (  (aliceFlagUP -> (<> aliceCS) )
+		      && (bobFlagUP -> (<> bobCS))))  
+idling = let
+		aliceFlagUP=|e.flag_alice=True|,
+		bobFlagUP=|e.flag_bob=True|
+	in
+		([]  (!aliceFlagUP -> (![] aliceCS))
+		   && (!bobFlagUP -> (![] bobCS)) )
+infoften 		=  [] <> bobCS
+
+all = (exclusion & eventuallyOneInCS & fairness & idling)

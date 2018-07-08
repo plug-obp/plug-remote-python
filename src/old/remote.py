@@ -23,7 +23,7 @@ def create_configuration_item(type_, name, icon = None, children = []):
 
 def create_server_socket(port):
     """Creates a a listening socket for a plug runtime on given port"""
-    print "Listening on port " + str(port)
+    print ( "Listening on port " + str(port) )
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
     server_socket.bind(("", port))
     server_socket.listen(1)
@@ -183,16 +183,16 @@ def handle_request(connected_socket, model):
             send_string(connected_socket, result)
 
         else:
-            print 'Unknown request: ' + unpacked[1]
+            print( 'Unknown request: ' + unpacked[1] )
         return True
     else:
-        print "Received EOS"
+        print ( "Received EOS" )
         return False
 
 def start_listening(server_socket, model):
     """Starts listening to server socket"""
     connected_socket, connected_from = server_socket.accept()
-    print "Connected to " + str(connected_from)
+    print ( "Connected to " + str(connected_from) )
     alive = handle_request(connected_socket, model)
     while alive:
         alive = handle_request(connected_socket, model)
@@ -202,4 +202,4 @@ def run(port, model):
     server_socket = create_server_socket(port)
     start_listening(server_socket, model)
     server_socket.close()
-    print "Connection closed"
+    print ( "Connection closed" )

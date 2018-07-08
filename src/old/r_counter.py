@@ -1,7 +1,7 @@
 import struct
-import remote  
+from old import remote
 import sys
-from main import main
+from old.main import main
 
 
 ######################

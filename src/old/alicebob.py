@@ -1,6 +1,6 @@
-from ga import VARIABLES, BEHAVIOURS, GUARD, ACTION, init_model, to_plug
+from old.ga import VARIABLES, BEHAVIOURS, GUARD, ACTION, init_model, to_plug
 import sys
-import main
+from old import main
 import functools
 
 UP = 1

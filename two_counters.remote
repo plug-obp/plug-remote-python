@@ -1,0 +1,3 @@
+{
+    "command": ["python3.7", "./src/two_counters.py", "--port=$PLUG_PORT"]
+}

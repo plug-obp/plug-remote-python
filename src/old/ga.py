@@ -1,6 +1,6 @@
 """Imports"""
 import struct
-import remote
+from old import remote
 
 ### Guard action model
 VARIABLES = "variables"
@@ -99,7 +99,7 @@ def to_plug(model):
         remote.CONF_SIZE: len(model[VARIABLES]) * 4,
         remote.TRANSITION_SIZE: transition_size,
         remote.INITIAL_CONFIGURATIONS:
-            lambda (model): [encode_configuration(model[ORIGINAL][VARIABLES])],
+            lambda model: [encode_configuration(model[ORIGINAL][VARIABLES])],
         remote.FIREABLE_TRANSITIONS_FROM: fireable_transitions_from,
         remote.FIRE_TRANSITION: fire_transition,
         remote.REGISTER_ATOMIC_PROPOSITIONS: register_atomic_proposition,
