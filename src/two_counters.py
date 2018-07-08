@@ -12,11 +12,11 @@ def two_counters(max=1):
         env[key] = 0
 
     # define the guard/action behaviors
-    i0 = Behavior(lambda env: env['a'] < max, functools.partial(inc, 'a'))
-    r0 = Behavior(lambda env: env['a'] >= max, functools.partial(reset, 'a'))
+    i0 = Behavior(lambda env: env['a'] < max, functools.partial(inc, 'a'), "a_inc")
+    r0 = Behavior(lambda env: env['a'] >= max, functools.partial(reset, 'a'), "a_reset")
 
-    i1 = Behavior(lambda env: env['b'] < max, functools.partial(inc, 'b'))
-    r1 = Behavior(lambda env: env['b'] >= max, functools.partial(reset, 'b'))
+    i1 = Behavior(lambda env: env['b'] < max, functools.partial(inc, 'b'), "b_inc")
+    r1 = Behavior(lambda env: env['b'] >= max, functools.partial(reset, 'b'), "b_reset")
 
     # make the soup
     soup = BehaviorSoup(Environment({'a': 0, 'b': 1}, [0, 0]), {i0, r0, i1, r1})
