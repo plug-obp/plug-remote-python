@@ -28,23 +28,6 @@ class Behavior:
         self.action(self.soup.environment)
 
 
-class BehaviorSoupTransitionRelation(AbstractTransitionRelation):
-
-    def __init__(self, soup):
-        self.soup = soup
-
-    def initial_configurations(self):
-        return {self.soup.environment.memory}
-
-    def fireable_transitions_from(self, source):
-        return set(filter(lambda beh: beh.is_enabled(source), self.soup.behaviors))
-
-    def fire_one_transition(self, source, transition):
-        target = copy.deepcopy(source)
-        transition.execute(target)
-        return {target}
-
-
 class Memory:
     data: list
 
@@ -97,6 +80,23 @@ class Environment:
 
     def __getattr__(self, item):
         return self[item]
+
+
+class BehaviorSoupTransitionRelation(AbstractTransitionRelation):
+
+    def __init__(self, soup):
+        self.soup = soup
+
+    def initial_configurations(self):
+        return {self.soup.environment.memory}
+
+    def fireable_transitions_from(self, source):
+        return set(filter(lambda beh: beh.is_enabled(source), self.soup.behaviors))
+
+    def fire_one_transition(self, source, transition):
+        target = copy.deepcopy(source)
+        transition.execute(target)
+        return {target}
 
 
 class BehaviorSoupRuntimeView(AbstractRuntimeView):
