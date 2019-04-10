@@ -40,16 +40,51 @@ class AbstractAtomEvaluator:
     def atomic_proposition_valuations(self, configuration) -> list:
         pass
 
+    @abstractmethod
+    def atomic_proposition_valuations(self, source, transition, payload, target) -> list:
+        pass
+
+
+class AbstractMarshaller:
+    module: object
+
+    @abstractmethod
+    def serialize_configuration(self, configuration) -> bytearray:
+        pass
+
+    @abstractmethod
+    def deserialize_configuration(self, bytes):
+        pass
+
+    @abstractmethod
+    def serialize_transition(self, transition) -> bytearray:
+        pass
+
+    @abstractmethod
+    def deserialize_transition(self, bytes):
+        pass
+
+    @abstractmethod
+    def serialize_payload(self, payload) -> bytearray:
+        pass
+
+    @abstractmethod
+    def deserialize_payload(self, bytes):
+        pass
+
 
 class LanguageModule:
     transition_relation: AbstractTransitionRelation
     runtime_view: AbstractRuntimeView
     atom_evaluator: AbstractAtomEvaluator
+    marshaller: AbstractMarshaller
 
-    def __init__(self, transition_relation, runtime_view, atom_evaluator):
+    def __init__(self, transition_relation, runtime_view, atom_evaluator, marshaller):
         self.transition_relation = transition_relation
         self.transition_relation.module = self
         self.runtime_view = runtime_view
         self.runtime_view.module = self
         self.atom_evaluator = atom_evaluator
         self.atom_evaluator.module = self
+        self.marshaller = marshaller
+        self.marshaller.module = self

@@ -29,7 +29,7 @@ def alice_bob_peterson():
             lambda env: env[name] == critical,
             c2ia,
             name + "_2init")
-        return {i2w, w2c, c2i}
+        return [i2w, w2c, c2i]
 
     # make the soup
     soup = BehaviorSoup(
@@ -38,10 +38,15 @@ def alice_bob_peterson():
              bob: 2, 'flag_'+bob: 3,
              'turn': 4},
             [init, False, init, False, 0]),
-        behavior(alice, bob).union(behavior(bob, alice)))
+        behavior(alice, bob) + behavior(bob, alice))
 
     # instantiate the TransitionRelation for the soup
-    return LanguageModule(BehaviorSoupTransitionRelation(soup), BehaviorSoupRuntimeView(soup), BehaviorSoupAtomEvaluator(soup))
+    return LanguageModule(
+        BehaviorSoupTransitionRelation(soup),
+        BehaviorSoupRuntimeView(soup),
+        BehaviorSoupAtomEvaluator(soup),
+        BehaviorSoupMarshaller(soup)
+    )
 
 if __name__ == "__main__":
     server(alice_bob_peterson)

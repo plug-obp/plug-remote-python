@@ -1,4 +1,5 @@
 import copy
+import pickle
 from plug_interface import *
 
 
@@ -26,6 +27,7 @@ class Behavior:
     def execute(self, memory):
         self.soup.environment.memory = memory
         self.action(self.soup.environment)
+        return 'payload[' + self.name + ']'
 
 
 class Memory:
@@ -91,12 +93,17 @@ class BehaviorSoupTransitionRelation(AbstractTransitionRelation):
         return {self.soup.environment.memory}
 
     def fireable_transitions_from(self, source):
-        return set(filter(lambda beh: beh.is_enabled(source), self.soup.behaviors))
+        return set(
+            map(
+                lambda t: self.soup.behaviors.index(t),
+                filter(
+                    lambda t: t.is_enabled(source),
+                    self.soup.behaviors)))
 
     def fire_one_transition(self, source, transition):
         target = copy.deepcopy(source)
-        transition.execute(target)
-        return {target}
+        payload = self.soup.behaviors[transition].execute(target)
+        return [{target}, payload]
 
 
 class BehaviorSoupRuntimeView(AbstractRuntimeView):
@@ -119,8 +126,8 @@ class BehaviorSoupRuntimeView(AbstractRuntimeView):
             items.append(self.create_configuration_item("variable", key + " = " + str(self.soup.environment[key])))
         return items
 
-    def fireable_transition_description(self, transition) -> str:
-        return str(transition.name)
+    def fireable_transition_description(self, transitionID) -> str:
+        return str(self.soup.behaviors[transitionID].name)
 
 
 class BehaviorSoupAtomEvaluator(AbstractAtomEvaluator):
@@ -141,7 +148,47 @@ class BehaviorSoupAtomEvaluator(AbstractAtomEvaluator):
         self.soup.environment.memory = configuration
         for ap in self.propositions:
             try:
-                result.append(eval(ap,globals(), {'e' : self.soup.environment}))
+                result.append(eval(ap,globals(), {'s' : self.soup.environment}))
             except:
                 result.append(False)
         return result
+
+    def atomic_proposition_valuations(self, source, transition, payload, target) -> list:
+        result = []
+
+        source_env = self.soup.environment
+        source_env.memory = source
+
+        target_env = self.soup.environment
+        target_env.memory = target
+
+        for ap in self.propositions:
+            try:
+                result.append(eval(ap, globals(), {'s': source_env, 'f' : transition, 'p' : payload, 't': target_env}))
+            except:
+                result.append(False)
+        return result
+
+
+class BehaviorSoupMarshaller(AbstractMarshaller):
+
+    def __init__(self, soup):
+        self.soup = soup
+
+    def serialize_configuration(self, configuration) -> bytearray:
+        return pickle.dumps(configuration)
+
+    def deserialize_configuration(self, bytes):
+        return pickle.loads(bytes)
+
+    def serialize_transition(self, transition) -> bytearray:
+        return pickle.dumps(transition)
+
+    def deserialize_transition(self, bytes):
+        return pickle.loads(bytes)
+
+    def serialize_payload(self, payload) -> bytearray:
+        return pickle.dumps(payload)
+
+    def deserialize_payload(self, bytes):
+        return pickle.loads(bytes)

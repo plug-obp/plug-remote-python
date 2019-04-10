@@ -43,65 +43,74 @@ class LanguageServer:
         self.listen()
         self.server_socket.close()
 
-    def send_int(self, sock, value):
+    def send_int(self, value, sock):
         message = bytearray(4)
         struct.pack_into("<i", message, 0, value)
         sock.send(message)
 
-    def receive_configuration(self, sock):
-        size = int(struct.unpack("<i", sock.recv(4))[0])
-        f = sock.makefile('rb', size)
-        configuration = pickle.load(f)
-        f.close()
-        return configuration
+    def recv_int(self, sock):
+        return int(struct.unpack("<i", sock.recv(4))[0])
 
-    def send_configuration(self, sock, configuration):
-        buffer = pickle.dumps(configuration)
-        self.send_int(sock, len(buffer))
+    def receive_configuration(self, sock):
+        size = self.recv_int(sock)
+        return self.module.marshaller.deserialize_configuration(sock.recv(size))
+
+    def send_configuration(self, configuration, sock):
+        buffer = self.module.marshaller.serialize_configuration(configuration)
+        self.send_int(len(buffer), sock)
+        sock.send(buffer)
+
+    def send_configurations(self, configurations, sock):
+        self.send_int(len(configurations), sock)
+        for configuration in configurations:
+            self.send_configuration(configuration, sock)
+
+    def receive_transition(self, sock):
+        size = self.recv_int(sock)
+        return self.module.marshaller.deserialize_transition(sock.recv(size))
+
+    def send_transition(self, transition, sock):
+        buffer = self.module.marshaller.serialize_transition(transition)
+        self.send_int(len(buffer), sock)
+        sock.send(buffer)
+
+    def send_transitions(self, transitions, sock):
+        self.send_int(len(transitions), sock)
+        for transition in transitions:
+            self.send_transition(transition, sock)
+
+    def receive_payload(self, sock):
+        size = self.recv_int(sock)
+        return self.module.marshaller.deserialize_payload(sock.recv(size))
+
+    def send_payload(self, payload, sock):
+        buffer = self.module.marshaller.serialize_payload(payload)
+        self.send_int(len(buffer), sock)
         sock.send(buffer)
 
     def initial_configurations(self, sock):
-        configurations = self.module.transition_relation.initial_configurations()
-        self.send_int(sock, len(configurations))
 
-        for config in configurations:
-            self.send_configuration(sock, config)
+        configurations = self.module.transition_relation.initial_configurations()
+
+        self.send_configurations(configurations, sock)
 
     def fireable_transitions_from(self, sock):
         configuration = self.receive_configuration(sock)
 
         fireables = self.module.transition_relation.fireable_transitions_from(configuration)
 
-        for transition in fireables:
-            id = self.transition2id.get(transition, len(self.transition2id))
-            if id == len(self.transition2id):
-                self.transition2id[transition] = id
-                self.id2transition[id] = transition
-
-        count = len(fireables)
-        message = bytearray(4 + 4 + count*4)
-        struct.pack_into("<ii", message, 0, count, 4)
-        current = 8
-
-        for transition in fireables:
-            struct.pack_into("<i", message, current, self.transition2id[transition])
-            current += 4
-        sock.send(message)
-
+        self.send_transitions(fireables, sock)
 
     def fire_one_transition(self, sock):
         source = self.receive_configuration(sock)
+        transition = self.receive_transition(sock)
 
-        transitionID = int(struct.unpack("<i", sock.recv(4))[0])
+        [configurations, payload] = self.module.transition_relation.fire_one_transition(source, transition)
 
-        configurations = self.module.transition_relation.fire_one_transition(source, self.id2transition[transitionID])
+        self.send_configurations(configurations, sock)
+        self.send_payload(payload, sock)
 
-        self.send_int(sock, len(configurations))
-
-        for config in configurations:
-            self.send_configuration(sock, config)
-
-    def send_string(self, sock, string):
+    def send_string(self, string, sock):
         """Sends a string in UTF-8"""
         if (string == None):
             data = bytearray(4)
@@ -115,50 +124,47 @@ class LanguageServer:
             sock.send(data)
             sock.send(raw)
 
-    def send_configuration_item(self, sock, item):
+    def send_configuration_item(self, item, sock):
         """Sends one configuration item"""
-        self.send_string(sock, item.get("type", ""))
-        self.send_string(sock, item.get("name", ""))
-        self.send_string(sock, item.get("icon", ""))
+        self.send_string(item.get("type", ""), sock)
+        self.send_string(item.get("name", ""), sock)
+        self.send_string(item.get("icon", ""), sock)
 
         children = item.get("children", [])
-        self.send_configuration_items(sock, children)
+        self.send_configuration_items(children, sock)
 
-    def send_configuration_items(self, sock, items):
+    def send_configuration_items(self, items, sock):
         """Sends configuration items"""
         message = bytearray(4)
         struct.pack_into("<i", message, 0, len(items))
         sock.send(message)
         for child in items:
-            self.send_configuration_item(sock, child)
+            self.send_configuration_item(child, sock)
 
     def configuration_items(self, sock):
         configuration = self.receive_configuration(sock)
-        self.send_configuration_items(sock, self.module.runtime_view.configuration_items(configuration))
+        self.send_configuration_items(self.module.runtime_view.configuration_items(configuration), sock)
 
     def fireable_transition_description(self, sock):
-        transitionID = int(struct.unpack("<i", sock.recv(4))[0])
-        self.send_string(sock, self.module.runtime_view.fireable_transition_description(self.id2transition[transitionID]))
+        transition = self.receive_transition(sock)
+        self.send_string(self.module.runtime_view.fireable_transition_description(transition), sock)
 
     def receive_atomic_propositions(self, sock):
         """Receives atomic propositions to register"""
-        raw_count = bytearray(4)
-        sock.recv_into(raw_count)
-        count = struct.unpack_from("<i", raw_count)[0]
+        atoms_count = struct.unpack_from("<i", sock.recv_into(bytearray(4)))[0]
         result = []
-        for _ in range(0, count):
-            sock.recv_into(raw_count)
-            size = struct.unpack_from("<i", raw_count)[0]
-            raw_proposition = bytearray(size)
+        for _ in range(0, atoms_count):
+            atom_size = struct.unpack_from("<i", sock.recv_into(bytearray(4)))[0]
+            raw_proposition = bytearray(atom_size)
             sock.recv_into(raw_proposition)
             result.append(raw_proposition.decode("utf-8"))
         return result
 
-    def send_ints(self, sock, ints):
+    def send_ints(self, ints, sock):
         """Sends an array of integers"""
-        count = len(ints)
-        message = bytearray(4 + count * 4)
-        struct.pack_into("<i", message, 0, count)
+        idx_count = len(ints)
+        message = bytearray(4 + idx_count * 4)
+        struct.pack_into("<i", message, 0, idx_count)
         current = 4
         for value in ints:
             struct.pack_into("<i", message, current, value)
@@ -168,13 +174,13 @@ class LanguageServer:
     def register_atomic_propositions(self, sock):
         propositions = self.receive_atomic_propositions(sock)
         result = self.module.atom_evaluator.register_atomic_propositions(propositions)
-        self.send_ints(sock, result)
+        self.send_ints(result, sock)
 
-    def send_valuations(self, sock, valuations):
+    def send_valuations(self, valuations, sock):
         """Sends valuations for atomic propositions"""
-        count = len(valuations)
-        message = bytearray(4 + count)
-        struct.pack_into("<i", message, 0, count)
+        value_count = len(valuations)
+        message = bytearray(4 + value_count)
+        struct.pack_into("<i", message, 0, value_count)
         current = 4
         for value in valuations:
             try:
@@ -187,7 +193,17 @@ class LanguageServer:
     def atomic_proposition_valuations(self, sock):
         configuration = self.receive_configuration(sock)
         result = self.module.atom_evaluator.atomic_proposition_valuations(configuration)
-        self.send_valuations(sock, result)
+        self.send_valuations(result, sock)
+
+    def extended_atomic_proposition_valuations(self, sock):
+        source = self.receive_configuration(sock)
+        transition = self.receive_transition(sock)
+        payload = self.receive_payload(sock)
+        target = self.receive_configuration(sock)
+
+        result = self.module.atom_evaluator.atomic_proposition_valuations(source, transition, payload, target)
+
+        self.send_valuations(result, sock)
 
     def api(self, sock) -> dict:
         return {
@@ -196,6 +212,7 @@ class LanguageServer:
             3: functools.partial(self.fire_one_transition, sock),
             4: functools.partial(self.register_atomic_propositions, sock),
             5: functools.partial(self.atomic_proposition_valuations, sock),
+            6: functools.partial(self.extended_atomic_proposition_valuations, sock),
             10: functools.partial(self.configuration_items, sock),
             11: functools.partial(self.fireable_transition_description, sock)
         }
