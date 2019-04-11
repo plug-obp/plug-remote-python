@@ -5,10 +5,9 @@ import getopt
 import functools
 import socket
 import struct
-import pickle
+import threading
 
 from plug_interface import LanguageModule
-
 
 class LanguageServer:
     port : int
@@ -28,19 +27,29 @@ class LanguageServer:
         print("Listening on port " + str(self.port))
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
         self.server_socket.bind(("", self.port))
-        self.server_socket.listen(1)
 
-    def listen(self):
-        """Starts listening to server socket"""
-        connected_socket, connected_from = self.server_socket.accept()
-        print("Connected to " + str(connected_from))
-        alive = self.handle_request(connected_socket)
-        while alive:
-            alive = self.handle_request(connected_socket)
+    def listenx(self, client_socket=None, client_address=None):
+        if client_socket == None:
+            client_socket, client_address = self.server_socket.accept()
+
+        print("Client ", str(client_address), " connected")
+        try:
+            alive = self.handle_request(client_socket)
+            while alive:
+                alive = self.handle_request(client_socket)
+        finally:
+            client_socket.close()
 
     def start(self):
         self.create_server_socket()
-        self.listen()
+
+        self.server_socket.listen(5)
+        #self.listenx()
+
+        while True:
+            client_socket, client_address = self.server_socket.accept()
+            threading.Thread(target = self.listenx, args = (client_socket, client_address)).start()
+
         self.server_socket.close()
 
     def send_int(self, value, sock):
@@ -151,10 +160,10 @@ class LanguageServer:
 
     def receive_atomic_propositions(self, sock):
         """Receives atomic propositions to register"""
-        atoms_count = struct.unpack_from("<i", sock.recv_into(bytearray(4)))[0]
+        atoms_count = self.recv_int(sock)
         result = []
         for _ in range(0, atoms_count):
-            atom_size = struct.unpack_from("<i", sock.recv_into(bytearray(4)))[0]
+            atom_size = self.recv_int(sock)
             raw_proposition = bytearray(atom_size)
             sock.recv_into(raw_proposition)
             result.append(raw_proposition.decode("utf-8"))
@@ -201,7 +210,7 @@ class LanguageServer:
         payload = self.receive_payload(sock)
         target = self.receive_configuration(sock)
 
-        result = self.module.atom_evaluator.atomic_proposition_valuations(source, transition, payload, target)
+        result = self.module.atom_evaluator.extended_atomic_proposition_valuations(source, transition, payload, target)
 
         self.send_valuations(result, sock)
 

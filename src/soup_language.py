@@ -1,5 +1,6 @@
 import copy
 import pickle
+import threading
 from plug_interface import *
 
 
@@ -10,6 +11,7 @@ class BehaviorSoup:
         self.behaviors = behaviors
         for behavior in behaviors:
             behavior.soup = self
+        self.initial = environment.memory
 
 
 class Behavior:
@@ -83,15 +85,25 @@ class Environment:
     def __getattr__(self, item):
         return self[item]
 
+def synchronized(func):
+    func.__lock__ = threading.Lock()
+
+    def synced_func(*args, **kws):
+        with func.__lock__:
+            return func(*args, **kws)
+
+    return synced_func
 
 class BehaviorSoupTransitionRelation(AbstractTransitionRelation):
 
     def __init__(self, soup):
         self.soup = soup
 
+    @synchronized
     def initial_configurations(self):
-        return {self.soup.environment.memory}
+        return {self.soup.initial}
 
+    @synchronized
     def fireable_transitions_from(self, source):
         return set(
             map(
@@ -100,6 +112,7 @@ class BehaviorSoupTransitionRelation(AbstractTransitionRelation):
                     lambda t: t.is_enabled(source),
                     self.soup.behaviors)))
 
+    @synchronized
     def fire_one_transition(self, source, transition):
         target = copy.deepcopy(source)
         payload = self.soup.behaviors[transition].execute(target)
@@ -119,6 +132,7 @@ class BehaviorSoupRuntimeView(AbstractRuntimeView):
         result['children'] = children
         return result
 
+    @synchronized
     def configuration_items(self, configuration) -> list:
         items = []
         self.soup.environment.memory = configuration
@@ -126,16 +140,22 @@ class BehaviorSoupRuntimeView(AbstractRuntimeView):
             items.append(self.create_configuration_item("variable", key + " = " + str(self.soup.environment[key])))
         return items
 
+    @synchronized
     def fireable_transition_description(self, transitionID) -> str:
         return str(self.soup.behaviors[transitionID].name)
 
 
 class BehaviorSoupAtomEvaluator(AbstractAtomEvaluator):
     propositions: list
+    source_env: Environment
+    target_env: Environment
 
     def __init__(self, soup):
         self.soup = soup
+        self.source_env = Environment(self.soup.environment.symbols, self.soup.environment.memory)
+        self.target_env = Environment(self.soup.environment.symbols, self.soup.environment.memory)
 
+    @synchronized
     def register_atomic_propositions(self, propositions) -> list:
         result = []
         self.propositions = propositions
@@ -143,6 +163,7 @@ class BehaviorSoupAtomEvaluator(AbstractAtomEvaluator):
             result.append(len(result))
         return result
 
+    @synchronized
     def atomic_proposition_valuations(self, configuration) -> list:
         result = []
         self.soup.environment.memory = configuration
@@ -153,18 +174,23 @@ class BehaviorSoupAtomEvaluator(AbstractAtomEvaluator):
                 result.append(False)
         return result
 
-    def atomic_proposition_valuations(self, source, transition, payload, target) -> list:
+    @synchronized
+    def extended_atomic_proposition_valuations(self, source, transitionID, payload, target)-> list:
         result = []
 
-        source_env = self.soup.environment
-        source_env.memory = source
-
-        target_env = self.soup.environment
-        target_env.memory = target
+        self.source_env.memory = source
+        self.target_env.memory = target
 
         for ap in self.propositions:
             try:
-                result.append(eval(ap, globals(), {'s': source_env, 'f' : transition, 'p' : payload, 't': target_env}))
+                result.append(
+                    eval(
+                        ap,
+                        globals(), {
+                            's' : self.source_env,
+                            'f' : self.soup.behaviors[transitionID],
+                            'p' : payload,
+                            't' : self.target_env}))
             except:
                 result.append(False)
         return result
