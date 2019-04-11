@@ -2,7 +2,7 @@ from soup_language import *
 from language_server import server
 
 
-def alice_bob_peterson():
+def alice_bob_flags_only():
     alice, bob = 'alice', 'bob'
     init, wait, critical = 0, 1, 2
 
@@ -33,9 +33,8 @@ def alice_bob_peterson():
     soup = BehaviorSoup(
         Environment(
             {alice: 0, 'flag_'+alice: 1,
-             bob: 2, 'flag_'+bob: 3,
-             'turn': 4},
-            [init, False, init, False, 0]),
+             bob: 2, 'flag_'+bob: 3},
+            [init, False, init, False]),
         behavior(alice, bob) + behavior(bob, alice))
 
     # instantiate the TransitionRelation for the soup
@@ -47,7 +46,7 @@ def alice_bob_peterson():
     )
 
 if __name__ == "__main__":
-    server(alice_bob_peterson)
+    server(alice_bob_flags_only)
 
 
 

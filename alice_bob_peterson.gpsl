@@ -8,18 +8,20 @@ exclusionI_target	= []!(|t.alice==0| && |t.bob==0|)
 
 stopInCS = [] !aliceCS
 
+no_deadlock = [] !|deadlock|
+
 fairness_s 		= 
 	let
-		aliceFlagUP=|s[flag_alice] = True|,
-		bobFlagUP=|s[flag_bob] = True|
+		aliceFlagUP=|s.flag_alice == True|,
+		bobFlagUP=|s.flag_bob == True|
 	in 
 		 ([]  (  (aliceFlagUP -> (<> aliceCS) )
 		      && (bobFlagUP -> (<> bobCS))))  
 
 fairness_f_s 		= 
 	let
-		aliceFlagUP=|t.name == 'alice_wantsIn'|,
-		bobFlagUP=|t.name == 'bob_wantsIn'|
+		aliceFlagUP=|f.name == 'alice_wantsIn'|,
+		bobFlagUP=|f.name == 'bob_wantsIn'|
 	in 
 		 ([]  (  (aliceFlagUP -> (<> aliceCS) )
 		      && (bobFlagUP -> (<> bobCS))))  
