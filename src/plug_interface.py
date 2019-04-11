@@ -41,7 +41,7 @@ class AbstractAtomEvaluator:
         pass
 
     @abstractmethod
-    def atomic_proposition_valuations(self, source, transition, payload, target) -> list:
+    def extended_atomic_proposition_valuations(self, source, transition, payload, target) -> list:
         pass
 
 

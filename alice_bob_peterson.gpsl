@@ -1,24 +1,35 @@
-aliceCS			= |e.alice==2|
-bobCS			= |e.bob==2|
-exclusionI 		= []!(|e.alice==0| && |e.bob==0|)
+aliceCS			= |s.alice==2|
+bobCS			= |s.bob==2|
 exclusion  		= []!(aliceCS && bobCS)
 eventuallyOneInCS 	= []<>(aliceCS || bobCS)
 
+exclusionI_source 	= []!(|s.alice==0| && |s.bob==0|)
+exclusionI_target	= []!(|t.alice==0| && |t.bob==0|)
+
 stopInCS = [] !aliceCS
 
-fairness 		= 
+fairness_s 		= 
 	let
-		aliceFlagUP=|e[flag_alice] = True|,
-		bobFlagUP=|e[flag_bob] = True|
+		aliceFlagUP=|s[flag_alice] = True|,
+		bobFlagUP=|s[flag_bob] = True|
 	in 
 		 ([]  (  (aliceFlagUP -> (<> aliceCS) )
 		      && (bobFlagUP -> (<> bobCS))))  
+
+fairness_f_s 		= 
+	let
+		aliceFlagUP=|t.name == 'alice_wantsIn'|,
+		bobFlagUP=|t.name == 'bob_wantsIn'|
+	in 
+		 ([]  (  (aliceFlagUP -> (<> aliceCS) )
+		      && (bobFlagUP -> (<> bobCS))))  
+
 idling = let
-		aliceFlagUP=|e.flag_alice=True|,
-		bobFlagUP=|e.flag_bob=True|
+		aliceFlagUP=|s.flag_alice=True|,
+		bobFlagUP=|s.flag_bob=True|
 	in
 		([]  (!aliceFlagUP -> (![] aliceCS))
 		   && (!bobFlagUP -> (![] bobCS)) )
 infoften 		=  [] <> bobCS
 
-all = (exclusion & eventuallyOneInCS & fairness & idling)
+all = (exclusion & eventuallyOneInCS & fairness_s & idling)
