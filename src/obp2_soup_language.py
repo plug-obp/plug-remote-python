@@ -1,7 +1,7 @@
 import copy
 import pickle
 import threading
-from plug_interface import *
+from obp2_runtime_core import *
 
 
 class BehaviorSoup:
@@ -85,6 +85,7 @@ class Environment:
     def __getattr__(self, item):
         return self[item]
 
+
 def synchronized(func):
     func.__lock__ = threading.Lock()
 
@@ -94,17 +95,18 @@ def synchronized(func):
 
     return synced_func
 
-class BehaviorSoupTransitionRelation(AbstractTransitionRelation):
+
+class BehaviorSoupTransitionRelation(OBP2TransitionRelation):
 
     def __init__(self, soup):
         self.soup = soup
 
     @synchronized
-    def initial_configurations(self):
+    def initial(self):
         return {self.soup.initial}
 
     @synchronized
-    def fireable_transitions_from(self, source):
+    def actions(self, source):
         return set(
             map(
                 lambda t: self.soup.behaviors.index(t),
@@ -113,39 +115,36 @@ class BehaviorSoupTransitionRelation(AbstractTransitionRelation):
                     self.soup.behaviors)))
 
     @synchronized
-    def fire_one_transition(self, source, transition):
+    def execute(self, source, transition):
         target = copy.deepcopy(source)
         payload = self.soup.behaviors[transition].execute(target)
-        return [{target}, payload]
+        result = {(target, payload)}
+        return result
 
 
-class BehaviorSoupRuntimeView(AbstractRuntimeView):
+class BehaviorSoupProjector(OBP2TreeProjector):
 
     def __init__(self, soup):
         self.soup = soup
 
-    def create_configuration_item(self, type_, name, icon = None, children = []):
-        result = {}
-        result['type'] = type_
-        result['name'] = name
-        result['icon'] = icon
-        result['children'] = children
-        return result
-
     @synchronized
-    def configuration_items(self, configuration) -> list:
-        items = []
+    def project_configuration(self, configuration) -> TreeItem:
+        children = []
         self.soup.environment.memory = configuration
         for key in self.soup.environment:
-            items.append(self.create_configuration_item("variable", key + " = " + str(self.soup.environment[key])))
-        return items
+            children.append(TreeItem(key + " = " + str(self.soup.environment[key])))
+        return TreeItem("soup", children)
 
     @synchronized
-    def fireable_transition_description(self, transitionID) -> str:
-        return str(self.soup.behaviors[transitionID].name)
+    def project_action(self, action) -> TreeItem:
+        return TreeItem(str(self.soup.behaviors[action].name))
+
+    @synchronized
+    def project_payload(self, payload) -> TreeItem:
+        return TreeItem(str(payload))
 
 
-class BehaviorSoupAtomEvaluator(AbstractAtomEvaluator):
+class BehaviorSoupAtomEvaluator(OBP2AtomEvaluator):
     propositions: list
     source_env: Environment
     target_env: Environment
@@ -154,12 +153,13 @@ class BehaviorSoupAtomEvaluator(AbstractAtomEvaluator):
         self.soup = soup
         self.source_env = Environment(self.soup.environment.symbols, self.soup.environment.memory)
         self.target_env = Environment(self.soup.environment.symbols, self.soup.environment.memory)
+        self.propositions = []
 
     @synchronized
     def register_atomic_propositions(self, propositions) -> list:
         result = []
         self.propositions = propositions
-        for ap in propositions:
+        for ap in self.propositions:
             result.append(len(result))
         return result
 
@@ -169,13 +169,13 @@ class BehaviorSoupAtomEvaluator(AbstractAtomEvaluator):
         self.soup.environment.memory = configuration
         for ap in self.propositions:
             try:
-                result.append(eval(ap,globals(), {'s' : self.soup.environment}))
+                result.append(eval(ap, globals(), {'s': self.soup.environment}))
             except:
                 result.append(False)
         return result
 
     @synchronized
-    def extended_atomic_proposition_valuations(self, source, transitionID, payload, target)-> list:
+    def extended_atomic_proposition_valuations(self, source, action, payload, target)-> list:
         result = []
 
         self.source_env.memory = source
@@ -187,34 +187,40 @@ class BehaviorSoupAtomEvaluator(AbstractAtomEvaluator):
                     eval(
                         ap,
                         globals(), {
-                            's' : self.source_env,
-                            'f' : self.soup.behaviors[transitionID],
-                            'p' : payload,
-                            't' : self.target_env}))
+                            's': self.source_env,
+                            'a': self.soup.behaviors[action],
+                            'p': payload,
+                            't': self.target_env}))
             except:
                 result.append(False)
         return result
 
 
-class BehaviorSoupMarshaller(AbstractMarshaller):
+class BehaviorSoupMarshaller(OBP2Marshaller):
 
-    def __init__(self, soup):
-        self.soup = soup
-
-    def serialize_configuration(self, configuration) -> bytearray:
+    def serialize_configuration(self, configuration) -> bytes:
         return pickle.dumps(configuration)
 
-    def deserialize_configuration(self, bytes):
-        return pickle.loads(bytes)
+    def deserialize_configuration(self, data):
+        return pickle.loads(data)
 
-    def serialize_transition(self, transition) -> bytearray:
-        return pickle.dumps(transition)
+    def serialize_action(self, action) -> bytes:
+        return pickle.dumps(action)
 
-    def deserialize_transition(self, bytes):
-        return pickle.loads(bytes)
+    def deserialize_action(self, data):
+        return pickle.loads(data)
 
-    def serialize_payload(self, payload) -> bytearray:
+    def serialize_payload(self, payload) -> bytes:
         return pickle.dumps(payload)
 
-    def deserialize_payload(self, bytes):
-        return pickle.loads(bytes)
+    def deserialize_payload(self, data):
+        return pickle.loads(data)
+
+
+def soup_language_module(soup):
+    return OBP2LanguageModule(
+        BehaviorSoupTransitionRelation(soup),
+        BehaviorSoupProjector(soup),
+        BehaviorSoupAtomEvaluator(soup),
+        BehaviorSoupMarshaller()
+    )

@@ -1,6 +1,0 @@
-{
-    "model": "guard_counter.remote",
-    "properties": {
-        "exclusion": "![]!(|c[\"a\"] > 4| && |c[\"b\"] > 3|)"
-    }
-}

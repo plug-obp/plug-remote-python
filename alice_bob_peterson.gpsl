@@ -20,8 +20,8 @@ fairness_s 		=
 
 fairness_f_s 		= 
 	let
-		aliceFlagUP=|f.name == 'alice_wantsIn'|,
-		bobFlagUP=|f.name == 'bob_wantsIn'|
+		aliceFlagUP=|a.name == 'alice_wantsIn'|,
+		bobFlagUP=|a.name == 'bob_wantsIn'|
 	in 
 		 ([]  (  (aliceFlagUP -> (<> aliceCS) )
 		      && (bobFlagUP -> (<> bobCS))))  
@@ -34,4 +34,4 @@ idling = let
 		   && (!bobFlagUP -> (![] bobCS)) )
 infoften 		=  [] <> bobCS
 
-all = (exclusion & eventuallyOneInCS & fairness_s & idling)
+all = (exclusion & no_deadlock & eventuallyOneInCS & fairness_s & idling)

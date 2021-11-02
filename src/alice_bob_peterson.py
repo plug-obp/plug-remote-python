@@ -1,5 +1,5 @@
-from soup_language import *
-from language_server import server
+from obp2_soup_language import *
+from obp2_language_server import server
 
 
 def alice_bob_peterson():
@@ -41,12 +41,7 @@ def alice_bob_peterson():
         behavior(alice, bob) + behavior(bob, alice))
 
     # instantiate the TransitionRelation for the soup
-    return LanguageModule(
-        BehaviorSoupTransitionRelation(soup),
-        BehaviorSoupRuntimeView(soup),
-        BehaviorSoupAtomEvaluator(soup),
-        BehaviorSoupMarshaller(soup)
-    )
+    return soup_language_module(soup)
 
 
 def example_extended_eval():
@@ -54,11 +49,13 @@ def example_extended_eval():
     m = alice_bob_peterson()
     tr = m.transition_relation
     # get initial configurations
-    i = list(tr.initial_configurations())[0]
+    i = list(tr.initial())[0]
     # get the first fireable transition from the initial configuration
-    f = list(tr.fireable_transitions_from(i))[0]
+    f = list(tr.actions(i))[0]
     # fire the transition
-    targets, payload = tr.fire_one_transition(i, f)
+    result = tr.execute(i, f)
+    targets = list(map(lambda f: f[0], result))
+    payload = list(result)[0][1]
 
     print(f"symbol_table: {tr.soup.environment.symbols}\n"
           f"step = [\n"
@@ -72,7 +69,7 @@ def example_extended_eval():
     t_e = Environment(tr.soup.environment.symbols, list(targets)[0])
 
     # create the extended eval function
-    evalf = lambda code: eval(code, globals(), {'s': s_e, 'f': tr.soup.behaviors[f], 'p': payload, 't': t_e})
+    evalf = lambda code: eval(code, globals(), {'s': s_e, 'a': tr.soup.behaviors[f], 'p': payload, 't': t_e})
 
     # the state of alice in the source
     code = 's.alice'
@@ -83,11 +80,14 @@ def example_extended_eval():
     print(f"eval('{code}') = {evalf(code)}")
 
     # the name of the fireable transition
-    code = 'f.name'
+    code = 'a.name'
     print(f"eval('{code}') = {evalf(code)}")
 
     # is the payload the one we expect?
     code = 'p == \'payload[alice_2wait]\''
+    print(f"eval('{code}') = {evalf(code)}")
+
+    code = 'p == \'payload[alice_wantsIn]\''
     print(f"eval('{code}') = {evalf(code)}")
 
     # does alice goes from state 0 to state 1 in this step?
@@ -99,11 +99,12 @@ def example_extended_eval():
     print(f"eval('{code}') = {evalf(code)}")
 
     # rising edge on the alice flag
-    code = 't.flag_alice and not s.flag_alice == 1'
+    code = 't.flag_alice and not s.flag_alice'
     print(f"eval('{code}') = {evalf(code)}")
+
 
 if __name__ == "__main__":
     server(alice_bob_peterson)
-
+    # example_extended_eval()
 
 

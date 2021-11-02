@@ -1,6 +1,0 @@
-{
-    "model": "python_alicebob1.remote",
-    "properties": {
-        "exclusion": "![]!(|c[\"alice_s\"] == CS| && |c[\"bob_s\"] == CS|)"
-    }
-}
