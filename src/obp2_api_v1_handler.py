@@ -50,7 +50,12 @@ class APIHandlerV1(api.ApiHandler):
         payload = Unmarshaller.read_buffer(self.client_socket)
         target = Unmarshaller.read_buffer(self.client_socket)
 
-        result = self.module.atom_evaluator.extended_atomic_proposition_valuations(source, action, payload, target)
+        result = self.module.atom_evaluator\
+            .extended_atomic_proposition_valuations(
+                source,
+                action if action != b'' else None,
+                payload if payload != b'' else None,
+                target)
         Marshaller.write_boolean_array(result, self.client_socket)
 
     def handle_project_configuration(self):

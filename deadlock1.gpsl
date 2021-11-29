@@ -1,0 +1,9 @@
+nodeadlock = []!|deadlock|
+
+le4s_  = [] (|s.pc <= 4| and (|deadlock| or |t.pc == s.pc + 1|))
+
+inc0 = [] (|t.pc == s.pc + 1| or |deadlock|)
+inc1 = [] (|deadlock| or |t.pc == s.pc + 1|)
+le4s  = [] ((|deadlock| or |t.pc == s.pc + 1|) and |s.pc <= 4|)
+le4t  = [] ((|deadlock| or |t.pc == s.pc + 1|) and |t.pc <= 4|)
+

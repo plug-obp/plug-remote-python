@@ -188,7 +188,7 @@ class BehaviorSoupAtomEvaluator(OBP2AtomEvaluator):
                         ap,
                         globals(), {
                             's': self.source_env,
-                            'a': self.soup.behaviors[action],
+                            'a': self.soup.behaviors[action] if action is not None else None,
                             'p': payload,
                             't': self.target_env}))
             except:

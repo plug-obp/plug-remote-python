@@ -76,8 +76,8 @@ class ByteArrayAtomEvaluator(core.OBP2AtomEvaluator):
     def extended_atomic_proposition_valuations(self, source, action, payload, target) -> list:
         marshaller = self.operand.marshaller
         the_source = marshaller.deserialize_configuration(source)
-        the_action = marshaller.deserialize_action(action)
-        the_payload= marshaller.deserialize_payload(payload)
+        the_action = marshaller.deserialize_action(action) if action is not None else None
+        the_payload= marshaller.deserialize_payload(payload) if payload is not None else None
         the_target = marshaller.deserialize_configuration(target)
         evaluator = self.operand.atom_evaluator
         return evaluator.extended_atomic_proposition_valuations(the_source, the_action, the_payload, the_target)
